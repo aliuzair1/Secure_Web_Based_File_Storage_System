@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureFiles - User Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/user-style.css">
+    <script defer src="js/user.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i> KuchBhi
+            </div>
+            <div class="user-actions">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="welcomeUser">Welcome</span>
+                </div>
+                <a href="#" id="logoutBtn" class="btn">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <div class="storage-usage">
+                <h3 class="usage-title">Storage Usage</h3>
+                <div class="usage-bar">
+                    <div class="usage-progress" id="usageProgress"></div>
+                </div>
+                <div class="usage-info">
+                    <span id="usedStorage">0 GB used</span>
+                    <span id="totalStorage">0 GB total</span>
+                </div>
+            </div>
+
+            <div class="dashboard-container">
+                <div class="section-title">
+                    <h2>My Files</h2>
+                    <button id="uploadBtn" class="btn btn-upload">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload File
+                    </button>
+                </div>
+
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search files...">
+                    <button id="searchBtn"><i class="fas fa-search"></i></button>
+                </div>
+
+                <div id="fileGrid" class="file-grid">
+                    <!-- Files will be loaded dynamically -->
+                </div>
+
+                <!-- Empty state -->
+                <div id="noFiles" class="no-files">
+                    <i class="far fa-folder-open"></i>
+                    <h3>No files found</h3>
+                    <p>Upload your first file to get started.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload File</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="uploadForm">
+                <div id="uploadArea" class="upload-area">
+                    <div class="upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="upload-text">
+                        <p>Drag and drop files here</p>
+                        <p>or</p>
+                        <button type="button" class="btn">Browse Files</button>
+                    </div>
+                    <input type="file" id="fileInput" class="upload-input">
+                </div>
+                <div id="selectedFile" class="selected-file" style="display: none;">
+                    <p><i class="fas fa-file"></i> <span id="fileName">No file selected</span></p>
+                </div>
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p><span id="progressPercent">0%</span></p>
+                </div>
+                <button type="submit" class="btn btn-upload btn-block">Upload</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="confirmModal" class="modal confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Confirm Delete</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <p>Are you sure you want to delete "<span id="deleteFileName"></span>"? This action cannot be undone.</p>
+            <div class="confirm-actions">
+                <button class="btn btn-cancel" id="cancelDelete">Cancel</button>
+                <button class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

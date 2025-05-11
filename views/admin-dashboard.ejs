@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureFiles - Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/admin-style.css">
+    <script defer src="js/admin.js"></script>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo-container">
+            <i class="fas fa-shield-alt"></i>
+            <span>SecureFiles</span>
+        </div>
+
+        <div class="admin-info">
+            <div class="admin-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div>
+                <div class="admin-name" id="adminName">Admin User</div>
+                <div class="admin-role">Administrator</div>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-file-alt"></i>
+                <span>Files</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reports</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            <a href="#" id="logoutBtn" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header class="header">
+            <h1 class="page-title">Admin Dashboard</h1>
+            <div class="header-actions">
+                <div class="header-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="content">
+            <!-- Dashboard Cards -->
+            <div class="dashboard-cards">
+                <div class="card stat-card">
+                    <div class="stat-icon users">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-icon files">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalFiles">0</div>
+                        <div class="stat-label">Total Files</div>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-icon storage">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalStorage">0</div>
+                        <div class="stat-label">Total Storage Used</div>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-icon premium">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="premiumUsers">0</div>
+                        <div class="stat-label">Premium Users</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Container -->
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="usersTab">Users Management</div>
+                    <div class="tab" data-tab="filesTab">File Management</div>
+                </div>
+
+                <!-- Users Tab Content -->
+                <div class="tab-content active" id="usersTab">
+                    <div class="search-bar">
+                        <input type="text" class="search-input" id="userSearchInput" placeholder="Search users...">
+                        <button class="search-btn" id="userSearchBtn"><i class="fas fa-search"></i></button>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Storage Used</th>
+                                    <th>Files</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- User data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="usersPagination">
+                        <!-- Pagination will be added dynamically -->
+                    </div>
+                </div>
+
+                <!-- Files Tab Content -->
+                <div class="tab-content" id="filesTab">
+                    <div class="search-bar">
+                        <input type="text" class="search-input" id="fileSearchInput" placeholder="Search files...">
+                        <button class="search-btn" id="fileSearchBtn"><i class="fas fa-search"></i></button>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Owner</th>
+                                    <th>Size</th>
+                                    <th>Uploaded</th>
+                                    <th>File Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filesTableBody">
+                                <!-- File data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="filesPagination">
+                        <!-- Pagination will be added dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2025 SecureFiles Admin Dashboard. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- User Details Modal -->
+    <div class="modal" id="userDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">User Details</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-details-container">
+                    <div class="user-details-header">
+                        <div class="user-details-avatar" id="userDetailsAvatar"></div>
+                        <div>
+                            <h3 class="user-details-name" id="userDetailsName"></h3>
+                            <div class="user-details-email" id="userDetailsEmail"></div>
+                        </div>
+                    </div>
+
+                    <div class="user-details-info">
+                        <div>
+                            <div class="user-details-item">
+                                <div class="user-details-label">Member Since</div>
+                                <div class="user-details-value" id="userDetailsMemberSince"></div>
+                            </div>
+
+                            <div class="user-details-item">
+                                <div class="user-details-label">Last Login</div>
+                                <div class="user-details-value" id="userDetailsLastLogin"></div>
+                            </div>
+
+                            <div class="user-details-item">
+                                <div class="user-details-label">IP Address</div>
+                                <div class="user-details-value" id="userDetailsIP"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="user-details-item">
+                                <div class="user-details-label">Account Type</div>
+                                <div class="user-details-value" id="userDetailsAccountType"></div>
+                            </div>
+
+                            <div class="user-details-item">
+                                <div class="user-details-label">Storage Used</div>
+                                <div class="user-details-value" id="userDetailsStorage"></div>
+                            </div>
+
+                            <div class="user-details-item">
+                                <div class="user-details-label">Total Files</div>
+                                <div class="user-details-value" id="userDetailsFiles"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Account Notes</label>
+                        <textarea id="userDetailsNotes" placeholder="Add notes about this user..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Update Account Type</label>
+                    <select id="userDetailsAccountTypeSelect">
+                        <option value="1">Free (5GB)</option>
+                        <option value="2">Premium (100GB)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Account Status</label>
+                    <select id="userDetailsStatusSelect">
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="locked">Locked</option>
+                    </select>
+                </div>
+
+                <input type="hidden" id="userDetailsId">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="deleteUserBtn">Delete Account</button>
+                <button class="btn" id="saveUserChangesBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

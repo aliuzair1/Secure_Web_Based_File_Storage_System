@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureFiles - Login</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/login-style.css">
+  <script defer src='js/login.js'></script>
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-shield-alt"></i> SecureFiles
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="container">
+      <div class="login-container" id="formsContainer">
+        <!-- Sign In Form -->
+        <div class="signin-form">
+          <h2 class="form-title">Sign In to Your Account</h2>
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="username">Username or Email</label>
+              <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <div class="toggle-password">
+                <input type="password" id="password" name="password" required>
+                <i class="far fa-eye" id="togglePassword"></i>
+              </div>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+            <button type="submit" class="btn">Sign In</button>
+          </form>
+          <div class="form-footer">
+            <p>Don't have an account? <a href="#" id="showSignup">Sign Up</a></p>
+          </div>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div class="signup-form">
+          <h2 class="form-title">Create Your Account</h2>
+          <form id="signupForm">
+            <div class="form-group">
+              <label for="fullname">Full Name</label>
+              <input type="text" id="fullname" name="fullname" required>
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+              <label for="newPassword">Password</label>
+              <div class="toggle-password">
+                <input type="password" id="newPassword" name="newPassword" required>
+                <i class="far fa-eye" id="toggleNewPassword"></i>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="confirmPassword">Confirm Password</label>
+              <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+            <div id="signupErrorMessage" class="error-message"></div>
+            <button type="submit" class="btn">Create Account</button>
+          </form>
+          <div class="form-footer">
+            <p>Already have an account? <a href="#" id="showSignin">Sign In</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>
