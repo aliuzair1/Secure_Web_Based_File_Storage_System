@@ -8,41 +8,36 @@ const adminRoutes = require('./routes/admin');
 const authMiddleware = require('./middlewares/auth');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-// Define Port 
+ 
 const PORT = process.env.PORT;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
-// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/favicon.ico', (req, res) => {
-  res.status(204).end(); // No content response
+  res.status(204).end();
 });
-// Routes
+
 app.get("/", (req, res) => {
   res.render("login");
 });
 
-// API routes
 app.use('/api/auth', authRoutes);
 
-// Secure routes that require authentication
 app.use('/api/files', authMiddleware, fileRoutes);
 app.use('/api/admin', authMiddleware, adminRoutes);
 
-// Serve uploaded files with authentication middleware
 app.use('/uploads', authMiddleware, express.static(path.join(__dirname, 'uploads')));
 
-// Regular user dashboard page
+//user dashboard
 app.get('/success', (req, res) => {
   res.render("user-dashboard");
 });
 
-// Admin dashboard page
+// Admin dashboard
 app.get('/admin', (req, res) => {
   try {
     res.render("admin-dashboard");
@@ -52,7 +47,7 @@ app.get('/admin', (req, res) => {
   }
 });
 
-// For handling 404 - page not found
+// For handling 404 - page not foun
 app.use((req, res, next) => {
   res.status(404).send('Page not found');
 });
