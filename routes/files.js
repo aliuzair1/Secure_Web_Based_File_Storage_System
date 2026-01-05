@@ -1,37 +1,41 @@
 const express = require('express');
 const router = express.Router();
-const { client, pool } = require('../pg');
+const { client } = require('../pg');
 const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
 const authMiddleware = require('../middlewares/auth');
 const { v4: uuidv4 } = require('uuid');
+const { S3Client, GetObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const multerS3 = require('multer-s3');
 require("dotenv").config();
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    // Generate a more secure unique filename with original extension
-    const uniqueSuffix = Date.now() + '-' + uuidv4();
-    const extension = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + extension);
+// Initialize S3 client
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
   }
 });
 
-const fileFilter = (req, file, cb) => {
-  cb(null, true);
-};
-
+// Configure multer for S3 uploads
 const upload = multer({
-  storage,
-  fileFilter,
+  storage: multerS3({
+    s3: s3Client,
+    bucket: process.env.S3_BUCKET_NAME,
+    metadata: (req, file, cb) => {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + uuidv4();
+      const extension = path.extname(file.originalname);
+      cb(null, `uploads/${req.user.user_id}/${file.fieldname}-${uniqueSuffix}${extension}`);
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    cb(null, true);
+  }
 });
 
 // Apply auth middleware to all routes
@@ -40,7 +44,6 @@ router.use(authMiddleware);
 // Get all files for the user
 router.get('/', async (req, res) => {
   try {
-    // Check if user is authenticated
     if (!req.user || !req.user.user_id) {
       console.error('User not authenticated in get files route');
       return res.status(401).json({ message: 'Authentication required' });
@@ -69,7 +72,6 @@ router.get('/', async (req, res) => {
 // Get storage info
 router.get('/storage-info', async (req, res) => {
   try {
-    // Check if user is authenticated
     if (!req.user || !req.user.user_id) {
       console.error('User not authenticated in storage-info route');
       return res.status(401).json({ message: 'Authentication required' });
@@ -105,20 +107,11 @@ router.get('/storage-info', async (req, res) => {
   }
 });
 
-// Upload file
+// Upload file to S3
 router.post('/upload', upload.single('file'), async (req, res) => {
   try {
-    // Check if user is authenticated
     if (!req.user || !req.user.user_id) {
       console.error('User not authenticated in upload route');
-      // Delete uploaded file if it exists
-      if (req.file && req.file.path) {
-        try {
-          fs.unlinkSync(req.file.path);
-        } catch (unlinkError) {
-          console.error('Error deleting file after auth failure:', unlinkError);
-        }
-      }
       return res.status(401).json({ message: 'Authentication required' });
     }
 
@@ -130,7 +123,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     console.log('File details:', {
       originalName: req.file.originalname,
       size: req.file.size,
-      path: req.file.path
+      key: req.file.key,
+      location: req.file.location
     });
 
     const fileExtension = path.extname(req.file.originalname).toLowerCase().substring(1);
@@ -146,10 +140,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     );
 
     if (storageResult.rows.length === 0) {
-      // Delete uploaded file
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
+      // Delete uploaded file from S3
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: req.file.key
+      }));
       return res.status(404).json({ message: 'User not found' });
     }
 
@@ -157,10 +152,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     const storageLimit = parseInt(storageResult.rows[0].storage_limit);
 
     if (currentUsage + fileSize > storageLimit) {
-      // Delete uploaded file
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
+      // Delete uploaded file from S3
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: req.file.key
+      }));
       return res.status(400).json({ message: 'Storage limit exceeded' });
     }
 
@@ -182,7 +178,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     }
 
     try {
-      // Insert file record
+      // Insert file record with S3 key as file_path
+      // NOTE: Database trigger will automatically update storage_used
       const fileResult = await client.query(
         `INSERT INTO files 
          (file_name, file_path, file_size, type_id, user_id, is_folder, upload_date)
@@ -190,7 +187,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
          RETURNING file_id, file_name, file_size, upload_date`,
         [
           req.file.originalname,
-          req.file.path,
+          req.file.key, // Store S3 key instead of local path
           fileSize,
           typeId,
           req.user.user_id
@@ -203,25 +200,21 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         [req.user.user_id, 'upload', fileResult.rows[0].file_id, `Uploaded file: ${req.file.originalname}`]
       );
 
-      // Update user storage
-      await client.query(
-        'UPDATE users SET storage_used = storage_used + $1 WHERE user_id = $2',
-        [fileSize, req.user.user_id]
-      );
+      // NOTE: No manual storage update needed - trigger handles it automatically
 
-      console.log('File uploaded successfully:', fileResult.rows[0]);
+      console.log('File uploaded successfully to S3:', fileResult.rows[0]);
 
-      // Return file information
       res.json(fileResult.rows[0]);
     } catch (dbError) {
       console.error('Database error during file upload:', dbError);
-      // If database operation fails, attempt to clean up the uploaded file
+      // Delete uploaded file from S3 if database operation fails
       try {
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-      } catch (unlinkError) {
-        console.error('Error deleting file after failed upload:', unlinkError);
+        await s3Client.send(new DeleteObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: req.file.key
+        }));
+      } catch (deleteError) {
+        console.error('Error deleting file from S3 after failed upload:', deleteError);
       }
       throw dbError;
     }
@@ -231,10 +224,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-// Download file
+// Download file from S3
 router.get('/download/:id', async (req, res) => {
   try {
-    // Check if user is authenticated
     if (!req.user || !req.user.user_id) {
       console.error('User not authenticated in download route');
       return res.status(401).json({ message: 'Authentication required' });
@@ -253,11 +245,14 @@ router.get('/download/:id', async (req, res) => {
 
     const file = result.rows[0];
 
-    // Check if file exists on disk
-    if (!fs.existsSync(file.file_path)) {
-      console.error('Physical file not found:', file.file_path);
-      return res.status(404).json({ message: 'File not found on server' });
-    }
+    // Generate a pre-signed URL for downloading from S3
+    const command = new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: file.file_path, // file_path now contains S3 key
+      ResponseContentDisposition: `attachment; filename="${file.file_name}"`
+    });
+
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL valid for 1 hour
 
     // Log activity
     await client.query(
@@ -271,18 +266,19 @@ router.get('/download/:id', async (req, res) => {
       [req.params.id]
     );
 
-    console.log('Sending file for download:', file.file_name);
-    res.download(file.file_path, file.file_name);
+    console.log('Generated download URL for:', file.file_name);
+    
+    // Redirect to the pre-signed URL
+    res.redirect(signedUrl);
   } catch (error) {
     console.error('Error downloading file:', error);
     res.status(500).json({ message: 'Error downloading file' });
   }
 });
 
-// Delete file
+// Delete file from S3
 router.delete('/:id', async (req, res) => {
   try {
-    // Check if user is authenticated
     if (!req.user || !req.user.user_id) {
       console.error('User not authenticated in delete route');
       return res.status(401).json({ message: 'Authentication required' });
@@ -290,7 +286,7 @@ router.delete('/:id', async (req, res) => {
 
     console.log('Processing delete for file:', req.params.id);
 
-    // First get the file to find its path
+    // First get the file to find its S3 key
     const fileQuery = await client.query(
       'SELECT file_path, file_name, file_size FROM files WHERE file_id = $1 AND user_id = $2',
       [req.params.id, req.user.user_id]
@@ -304,6 +300,7 @@ router.delete('/:id', async (req, res) => {
     console.log('File to delete:', fileInfo);
 
     // Delete file from database
+    // NOTE: Database trigger will automatically update storage_used
     const result = await client.query(
       'DELETE FROM files WHERE file_id = $1 AND user_id = $2 RETURNING file_name',
       [req.params.id, req.user.user_id]
@@ -313,23 +310,18 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ message: 'File not found' });
     }
 
-    // Update user's storage usage
-    await client.query(
-      'UPDATE users SET storage_used = storage_used - $1 WHERE user_id = $2',
-      [fileInfo.file_size, req.user.user_id]
-    );
+    // NOTE: No manual storage update needed - trigger handles it automatically
 
-    // Try to delete the physical file
+    // Delete the file from S3
     try {
-      if (fs.existsSync(fileInfo.file_path)) {
-        fs.unlinkSync(fileInfo.file_path);
-        console.log('Physical file deleted:', fileInfo.file_path);
-      } else {
-        console.log('Physical file not found for deletion:', fileInfo.file_path);
-      }
-    } catch (fsError) {
-      console.error('Error deleting physical file:', fsError);
-      // Continue even if physical deletion fails
+      await s3Client.send(new DeleteObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: fileInfo.file_path // file_path contains S3 key
+      }));
+      console.log('File deleted from S3:', fileInfo.file_path);
+    } catch (s3Error) {
+      console.error('Error deleting file from S3:', s3Error);
+      // Continue even if S3 deletion fails
     }
 
     // Log activity
@@ -349,7 +341,6 @@ router.delete('/:id', async (req, res) => {
 // Search files
 router.get('/search', async (req, res) => {
   try {
-    // Check if user is authenticated
     if (!req.user || !req.user.user_id) {
       console.error('User not authenticated in search route');
       return res.status(401).json({ message: 'Authentication required' });

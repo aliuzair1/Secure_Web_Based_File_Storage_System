@@ -12,7 +12,6 @@ body {
     display: flex;
 }
 
-/* Sidebar */
 .sidebar {
     width: 250px;
     background-color: #1e1e1e;
@@ -26,7 +25,7 @@ body {
     padding: 1.5rem;
     display: flex;
     align-items: center;
-    color: #e91e63;
+    color: #eb0000;
     font-size: 1.5rem;
     font-weight: bold;
     border-bottom: 1px solid #333;
@@ -46,7 +45,7 @@ body {
 .admin-avatar {
     width: 40px;
     height: 40px;
-    background-color: #e91e63;
+    background-color: #970303;
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -82,7 +81,7 @@ body {
 
 .nav-item.active {
     background-color: #2a2a2a;
-    border-left: 4px solid #e91e63;
+    border-left: 4px solid #b50606;
 }
 
 .nav-item i {
@@ -91,7 +90,6 @@ body {
     text-align: center;
 }
 
-/* Main Content */
 .main-content {
     flex: 1;
     margin-left: 250px;
@@ -139,7 +137,7 @@ body {
     position: absolute;
     top: -5px;
     right: -5px;
-    background-color: #e91e63;
+    background-color: #ad0707;
     color: white;
     border-radius: 50%;
     width: 18px;
@@ -187,7 +185,7 @@ body {
 
 .stat-icon.users {
     background-color: rgba(233, 30, 99, 0.2);
-    color: #e91e63;
+    color: #c90606;
 }
 
 .stat-icon.files {
@@ -239,7 +237,7 @@ body {
 }
 
 .tab.active {
-    color: #e91e63;
+    color: #c00707;
 }
 
 .tab.active::after {
@@ -323,7 +321,7 @@ tr:last-child td {
 
 .btn {
     display: inline-block;
-    background-color: #e91e63;
+    background-color: #a90505;
     color: white;
     border: none;
     border-radius: 5px;
@@ -391,7 +389,7 @@ tr:last-child td {
 }
 
 .search-btn {
-    background-color: #e91e63;
+    background-color: #da0909;
     color: white;
     border: none;
     border-radius: 0 5px 5px 0;
@@ -455,7 +453,6 @@ tr:last-child td {
     color: #607d8b;
 }
 
-/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -627,7 +624,7 @@ tr:last-child td {
 }
 
 .page-item:hover, .page-item.active {
-    background-color: #e91e63;
+    background-color: #760505;
 }
 
 .storage-bar {
